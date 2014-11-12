@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "Tabs Butcher",
+    "description": "The name of the application"
+  },
+  "appDescription": {
+    "message": "Helps you to drive your tabs count down.",
+    "description": "The description of the application"
+  }
+}
