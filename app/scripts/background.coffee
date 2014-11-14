@@ -7,27 +7,17 @@ todayOnBadge = true
 
 deviceId = null
 currentDay = 0
-streak = 0
 
 tabs =
   all: 0
   today: 0
 
 
-##### TEMP HACK
-chrome.storage.sync.clear()
-setTimeout ->
-  currentDay = new Date()
-  currentDay.setHours 0, 0, 0, 0
-  currentDay.setDate currentDay.getDate() - 1
-, 10000
-
-
 streakBadges =
   1:
     image: 'images/star1.png'
     title: 'Awesome first step'
-    msg: '1 is the only odd number in the range of Euler\'s totient fn φ(x); (for x = 1 or 2)'
+    msg: '1 is the only odd number in the range of Euler\'s totient Fn φ(x); (for x = 1 or 2)'
     # btn:
     #   txt: 'More about Euler\'s totient fn'
     #   url: 'http://goo.gl/7ZPb2C'
@@ -53,6 +43,17 @@ streakBadges =
 #
 # Definitions
 #
+getToday = ->
+  today = new Date()
+  today.setHours 0, 0, 0, 0 # Leave the date; null the time
+  today
+
+getYesterday = ->
+  yesterday = getToday()
+  yesterday.setDate yesterday.getDate() - 1
+  yesterday
+
+
 getBrowserId = (cb) ->
   generateNewId = ->
     randomPool = new Uint8Array 8
@@ -73,42 +74,9 @@ getCurrentTabsCount = (cb) ->
       cnt + window.tabs.length
     , 0
 
-saveDay = (cb) ->
-  o = {}
-  o[deviceId] = []
-
-  chrome.storage.sync.get o, (result) ->
-    result[deviceId].push
-      date: currentDay
-      tabsAll: tabs.all
-      tabsToday: tabs.today
-
-    chrome.storage.sync.set result, ->
-      cb result[deviceId]
-
-checkStreak = (days, cb) ->
-  console.log days
-  cb 1
-
-checkDate = ->
-  now = new Date()
-  now.setHours 0, 0, 0, 0 # Leave the date; null the time
-
-  currentDay = now unless currentDay
-
-  if now.getTime() isnt currentDay.getTime()
-    saveDay (days) ->
-      tabs.today = 0
-      currentDay = now
-
-      checkStreak days, (n) ->
-        if streakBadges[n]?
-          showNotification n
 
 # Notifications stuff
-showNotification = (number) ->
-  return 'nope'
-  n = streakBadges[number]
+showAwesomeNotification = (n) ->
   chrome.notifications.create deviceId + '_' + currentDay,
     type: 'image'
     priority: 2
@@ -121,6 +89,23 @@ showNotification = (number) ->
     #   title: n.btn.txt
     # ]
   , ->
+
+showBasicNotification = (n) ->
+  chrome.notifications.create deviceId + '_' + currentDay,
+    type: 'basic'
+    iconUrl: 'images/icon38.png'
+
+    title: '' + n + 'days streak'
+    message: 'Good job!'
+  , ->
+
+showNotification = (n) ->
+  n = 2
+  if streakBadges[n]?
+    showAwesomeNotification streakBadges[n]
+
+  else
+    showBasicNotification n
 
 
 # Badge stuff
@@ -138,6 +123,55 @@ changeBadge = ->
   updateBadge()
 
 
+checkStreak = (days, cb) ->
+  lastKnownDay = days.reduce (prev, current) ->
+    return current if current.date > prev.date
+    prev
+
+  , date: -1
+
+  currentStreak = 0
+
+  if lastKnownDay.date is getYesterday().getTime()
+    currentStreak = 1
+
+    if lastKnownDay.streak?
+      currentStreak = lastKnownDay.streak + 1
+
+  cb currentStreak
+
+saveDay = (cb) ->
+  o = {}
+  o[deviceId] = []
+
+  chrome.storage.sync.get o, (result) ->
+    checkStreak result[deviceId], (days) ->
+      toSave =
+        date: currentDay.getTime()
+        tabsAll: tabs.all
+        tabsToday: tabs.today
+
+      toSave.streak = days if days > 0
+
+      result[deviceId].push toSave
+
+      chrome.storage.sync.set result, ->
+        cb days
+
+checkDate = ->
+  now = getToday()
+
+  currentDay = now unless currentDay
+
+  if now.getTime() isnt currentDay.getTime()
+    console.log 'day changed!'
+    saveDay (streakDays) ->
+      tabs.today = 0
+      currentDay = now
+
+      showNotification streakDays
+
+
 # Listeners
 chrome.browserAction.onClicked.addListener changeBadge
 
@@ -151,9 +185,7 @@ chrome.tabs.onRemoved.addListener ->
   tabs.all--
   updateBadge()
 
-
-# Ticker
-setInterval checkDate, 1000
+chrome.tabs.onActivated.addListener checkDate
 
 
 #
