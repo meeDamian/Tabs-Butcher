@@ -7,6 +7,7 @@ todayOnBadge = true
 
 deviceId = null
 currentDay = 0
+affectionWasShown = false
 
 tabs =
   all: 0
@@ -76,6 +77,20 @@ getCurrentTabsCount = (cb) ->
 
 
 # Notifications stuff
+showLoveNotification = ->
+  p = Math.floor Math.abs(tabs.today) * 100 / tabs.all
+  chrome.notifications.create deviceId + '_' + tabs.today,
+    type: 'progress'
+    iconUrl: 'images/heart128.png'
+
+    progress: p
+
+    title: '20 tabs closed!'
+    message: 'Your computer sends you its love ♥'
+    contextMessage: 'That was ' + p + '% of all open tabs'
+  , ->
+
+
 showAwesomeNotification = (n) ->
   chrome.notifications.create deviceId + '_' + currentDay,
     type: 'image'
@@ -151,7 +166,9 @@ saveDay = (cb) ->
         tabsAll: tabs.all
         tabsToday: tabs.today
 
-      toSave.streak = days if days > 0
+      if days > 0
+        toSave.streak = days
+        chrome.browserAction.setTitle title: '' + days + ' days streak'
 
       result[deviceId].push toSave
 
@@ -168,12 +185,14 @@ checkDate = ->
     saveDay (streakDays) ->
       tabs.today = 0
       currentDay = now
+      affectionWasShown = false
 
       showNotification streakDays
 
 
 # Listeners
 chrome.browserAction.onClicked.addListener changeBadge
+chrome.tabs.onActivated.addListener checkDate
 
 chrome.tabs.onCreated.addListener ->
   tabs.today++
@@ -185,8 +204,9 @@ chrome.tabs.onRemoved.addListener ->
   tabs.all--
   updateBadge()
 
-chrome.tabs.onActivated.addListener checkDate
-
+  if tabs.today is -20 and not affectionWasShown
+    affectionWasShown = true
+    showLoveNotification()
 
 #
 # Main logic
