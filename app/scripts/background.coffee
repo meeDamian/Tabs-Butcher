@@ -17,8 +17,8 @@ tabs =
 streakBadges =
   1:
     image: 'images/star1.png'
-    title: 'Awesome first step'
-    msg: '1 is the only odd number in the range of Euler\'s totient Fn φ(x); (for x = 1 or 2)'
+    title: chrome.i18n.getMessage 'streak1_title'
+    msg: chrome.i18n.getMessage 'streak1_message'
     # btn:
     #   txt: 'More about Euler\'s totient fn'
     #   url: 'http://goo.gl/7ZPb2C'
@@ -26,16 +26,16 @@ streakBadges =
 
   3:
     image: 'images/css3.png'
-    title: 'And you keep going!'
-    msg: 'You\'re as awesome as CSS3'
+    title: chrome.i18n.getMessage 'streak3_title'
+    msg: chrome.i18n.getMessage 'streak3_message'
     # btn:
     #   txt: 'See awesome CSS3 goodies'
     #   url: ''
 
   5:
     image: 'images/html5.png'
-    title: 'Nobody can stop you, can\'t they‽'
-    msg: 'You\'re as awesome as CSS3'
+    title: chrome.i18n.getMessage 'streak5_title'
+    msg: chrome.i18n.getMessage 'streak5_message'
     # btn:
     #   txt: 'Feed me HTML5 magic!'
     #   url: ''
@@ -85,9 +85,9 @@ showLoveNotification = ->
 
     progress: p
 
-    title: '20 tabs closed!'
-    message: 'Your computer sends you its love ♥'
-    contextMessage: 'That was ' + p + '% of all open tabs'
+    title: chrome.i18n.getMessage 'love20_title', [20]
+    message: chrome.i18n.getMessage 'love20_message'
+    contextMessage: chrome.i18n.getMessage 'love20_context', [p]
   , ->
 
 
@@ -110,8 +110,8 @@ showBasicNotification = (n) ->
     type: 'basic'
     iconUrl: 'images/icon38.png'
 
-    title: '' + n + 'days streak'
-    message: 'Good job!'
+    title: chrome.i18n.getMessage 'basicStreak_title', [n]
+    message: chrome.i18n.getMessage 'basicStreak_message'
   , ->
 
 showNotification = (n) ->
@@ -168,7 +168,7 @@ saveDay = (cb) ->
 
       if days > 0
         toSave.streak = days
-        chrome.browserAction.setTitle title: '' + days + ' days streak'
+        chrome.browserAction.setTitle title: chrome.i18n.getMessage 'badgeTitle', [days]
 
       result[deviceId].push toSave
 
