@@ -44,10 +44,12 @@ streakBadges =
 #
 # Definitions
 #
-getToday = ->
+getTodayAt = (h=0, m=0) ->
   today = new Date()
-  today.setHours 0, 0, 0, 0 # Leave the date; null the time
+  today.setHours h, m, 0, 0 # Leave the date; null the time
   today
+
+getToday = getTodayAt
 
 getYesterday = ->
   yesterday = getToday()
@@ -85,6 +87,37 @@ getCurrentTabsCount = (cb) ->
 
 
 # Notifications stuff
+showTimeNotification = (left) ->
+  console.log left
+
+showCountdownNotification = ->
+  getProgress = -> Math.abs Math.round (new Date() - getTodayAt(23, 59)) / 600
+  obj =
+    type: 'progress'
+    iconUrl: 'images/icon38.png'
+    priority: 1
+
+    progress: 100 - getProgress()
+
+    title: 'Last minute!'
+    message: 'Last moment to close your tabs'
+    contextMessage: '1 minute'
+
+  id = deviceId + '_warning'
+
+  chrome.notifications.create id, obj, ->
+    obj.priority = 2
+    panicFn = ->
+      progress = getProgress()
+      obj.progress = 100 - progress
+      obj.contextMessage = '' + Math.round(progress * 6 / 10) + ' seconds'
+      chrome.notifications.update id, obj, ->
+        setTimeout panicFn, 1000 if progress < 100
+
+    setTimeout panicFn, 1000
+
+showCountdownNotification()
+
 showLoveNotification = ->
   p = Math.floor Math.abs(tabs.today) * 100 / tabs.all
   chrome.notifications.create deviceId + '_' + tabs.today,
@@ -157,6 +190,20 @@ changeBadge = ->
   saveBadgeState todayOnBadge, updateBadge
 
 
+setWarnings = ->
+  diff = getTodayAt(23) - new Date().getTime()
+  setTimeout showTimeNotification, diff, '1 hour' if diff > 0
+
+  diff = getTodayAt(23, 30) - new Date().getTime()
+  setTimeout showTimeNotification, diff, '30 minutes' if diff > 0
+
+  diff = getTodayAt(23, 45) - new Date().getTime()
+  setTimeout showTimeNotification, diff, '15 minutes' if diff > 0
+
+  diff = getTodayAt(23, 55) - new Date().getTime()
+  setTimeout showTimeNotification, diff, '5 minutes' if diff > 0
+
+
 checkStreak = (days, cb) ->
   lastKnownDay = days.reduce (prev, current) ->
     return current if current.date > prev.date
@@ -204,6 +251,7 @@ checkDate = ->
       affectionWasShown = false
 
       showNotification streakDays
+      setWarnings()
 
 saveTabs = -> chrome.storage.sync.set getObj getToday().getTime(), tabs
 getTabs = (cb) ->
@@ -246,6 +294,7 @@ getBrowserId (id) ->
       tabs.today = t.today if t isnt null
 
       updateBadge()
+      setWarnings()
       initListeners()
 
 
