@@ -115,7 +115,6 @@ showBasicNotification = (n) ->
   , ->
 
 showNotification = (n) ->
-  n = 2
   if streakBadges[n]?
     showAwesomeNotification streakBadges[n]
 
