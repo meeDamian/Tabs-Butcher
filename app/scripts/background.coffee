@@ -3,10 +3,10 @@
 #
 # Variables
 #
-todayOnBadge = true
+todayOnBadge = null
 
 deviceId = null
-currentDay = 0
+currentDay = null
 affectionWasShown = false
 
 tabs =
@@ -123,18 +123,32 @@ showNotification = (n) ->
 
 
 # Badge stuff
+getBadgeKey = -> deviceId + '_badgeState'
+saveBadgeState = (state, cb) ->
+  obj = {}
+  obj[getBadgeKey()] = state
+  chrome.storage.sync.set obj, cb
+
+getBadgeState = (cb) ->
+  return cb todayOnBadge unless todayOnBadge is null
+
+  chrome.storage.sync.get getBadgeKey(), (result) ->
+    todayOnBadge = result[getBadgeKey()] ? false
+    cb todayOnBadge
+
 setBadge = (number, color) ->
   chrome.browserAction.setBadgeText text: '' + Math.abs number
   chrome.browserAction.setBadgeBackgroundColor color: color
 
 updateBadge = ->
-  if todayOnBadge then setBadge tabs.all, '#5677fc'
-  else
-    setBadge tabs.today, if tabs.today > 0 then '#e51c23' else '#259b24'
+  getBadgeState (badgeState) ->
+    if badgeState then setBadge tabs.all, '#5677fc'
+    else
+      setBadge tabs.today, if tabs.today > 0 then '#e51c23' else '#259b24'
 
 changeBadge = ->
   todayOnBadge = not todayOnBadge
-  updateBadge()
+  saveBadgeState todayOnBadge, updateBadge
 
 
 checkStreak = (days, cb) ->
@@ -180,7 +194,6 @@ checkDate = ->
   currentDay = now unless currentDay
 
   if now.getTime() isnt currentDay.getTime()
-    console.log 'day changed!'
     saveDay (streakDays) ->
       tabs.today = 0
       currentDay = now
