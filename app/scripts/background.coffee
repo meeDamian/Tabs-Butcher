@@ -54,6 +54,14 @@ getYesterday = ->
   yesterday.setDate yesterday.getDate() - 1
   yesterday
 
+getObj = (key, val) ->
+  k = deviceId
+  k += '_' + key if key
+
+  o = {}
+  o[k] = val
+  o
+
 
 getBrowserId = (cb) ->
   generateNewId = ->
@@ -125,15 +133,13 @@ showNotification = (n) ->
 # Badge stuff
 getBadgeKey = -> deviceId + '_badgeState'
 saveBadgeState = (state, cb) ->
-  obj = {}
-  obj[getBadgeKey()] = state
-  chrome.storage.sync.set obj, cb
+  chrome.storage.sync.set getObj('badgeState', state), cb
 
 getBadgeState = (cb) ->
   return cb todayOnBadge unless todayOnBadge is null
 
-  chrome.storage.sync.get getBadgeKey(), (result) ->
-    todayOnBadge = result[getBadgeKey()] ? false
+  chrome.storage.sync.get getObj('badgeState', false), (result) ->
+    todayOnBadge = result[getBadgeKey()]
     cb todayOnBadge
 
 setBadge = (number, color) ->
@@ -169,10 +175,8 @@ checkStreak = (days, cb) ->
   cb currentStreak
 
 saveDay = (cb) ->
-  o = {}
-  o[deviceId] = []
-
-  chrome.storage.sync.get o, (result) ->
+  chrome.storage.sync.remove deviceId + '_' + getYesterday().getTime()
+  chrome.storage.sync.get getObj(null, []), (result) ->
     checkStreak result[deviceId], (days) ->
       toSave =
         date: currentDay.getTime()
@@ -201,24 +205,33 @@ checkDate = ->
 
       showNotification streakDays
 
+saveTabs = -> chrome.storage.sync.set getObj getToday().getTime(), tabs
+getTabs = (cb) ->
+  chrome.storage.sync.get getObj(getToday().getTime(), null), (result) ->
+    cb result[deviceId + '_' + getToday().getTime()]
+
+
 
 # Listeners
-chrome.browserAction.onClicked.addListener changeBadge
-chrome.tabs.onActivated.addListener checkDate
+initListeners = ->
+  chrome.browserAction.onClicked.addListener changeBadge
+  chrome.tabs.onActivated.addListener checkDate
 
-chrome.tabs.onCreated.addListener ->
-  tabs.today++
-  tabs.all++
-  updateBadge()
+  chrome.tabs.onCreated.addListener ->
+    tabs.today++
+    tabs.all++
+    saveTabs()
+    updateBadge()
 
-chrome.tabs.onRemoved.addListener ->
-  tabs.today--
-  tabs.all--
-  updateBadge()
+  chrome.tabs.onRemoved.addListener ->
+    tabs.today--
+    tabs.all--
+    saveTabs()
+    updateBadge()
 
-  if tabs.today is -20 and not affectionWasShown
-    affectionWasShown = true
-    showLoveNotification()
+    if tabs.today is -20 and not affectionWasShown
+      affectionWasShown = true
+      showLoveNotification()
 
 #
 # Main logic
@@ -228,4 +241,14 @@ getBrowserId (id) ->
 
   getCurrentTabsCount (tabsCnt) ->
     tabs.all = tabsCnt
-    updateBadge()
+
+    getTabs (t) ->
+      tabs.today = t.today if t isnt null
+
+      updateBadge()
+      initListeners()
+
+
+# DEBUG-y thingy
+# chrome.storage.sync.get null, (result) ->
+#   console.log 'all', result
