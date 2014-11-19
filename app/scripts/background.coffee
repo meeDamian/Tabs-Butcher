@@ -152,6 +152,12 @@ updateBadge = ->
     else
       setBadge tabs.today, if tabs.today > 0 then '#e51c23' else '#259b24'
 
+changeTabsCount = (n) ->
+    tabs.today + n
+    tabs.all + n
+    saveTabs()
+    updateBadge()
+
 changeBadge = ->
   todayOnBadge = not todayOnBadge
   saveBadgeState todayOnBadge, updateBadge
@@ -216,18 +222,9 @@ getTabs = (cb) ->
 initListeners = ->
   chrome.browserAction.onClicked.addListener changeBadge
   chrome.tabs.onActivated.addListener checkDate
-
-  chrome.tabs.onCreated.addListener ->
-    tabs.today++
-    tabs.all++
-    saveTabs()
-    updateBadge()
-
+  chrome.tabs.onCreated.addListener -> changeTabsCount 1
   chrome.tabs.onRemoved.addListener ->
-    tabs.today--
-    tabs.all--
-    saveTabs()
-    updateBadge()
+    changeTabsCount -1
 
     if tabs.today is -20 and not affectionWasShown
       affectionWasShown = true
