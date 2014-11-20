@@ -203,13 +203,16 @@ checkDate = ->
 
   currentDay = now unless currentDay
 
-  if now.getTime() isnt currentDay.getTime()
-    saveDay (streakDays) ->
-      tabs.today = 0
-      currentDay = now
-      affectionWasShown = false
+  if now.getTime() is currentDay.getTime()
+    return updateBadge()
 
-      showNotification streakDays
+  saveDay (streakDays) ->
+    tabs.today = 0
+    currentDay = now
+    affectionWasShown = false
+
+    updateBadge()
+    showNotification streakDays
 
 saveTabs = -> chrome.storage.sync.set getObj getToday().getTime(), tabs
 getTabs = (cb) ->
@@ -244,8 +247,3 @@ getBrowserId (id) ->
 
       updateBadge()
       initListeners()
-
-
-# DEBUG-y thingy
-# chrome.storage.sync.get null, (result) ->
-#   console.log 'all', result
