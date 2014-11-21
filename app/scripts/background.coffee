@@ -70,7 +70,7 @@ getBrowserId = (cb) ->
 
     (val.toString 16 for val in randomPool).join ''
 
-  saveId = (id, _cb) -> chrome.storage.local.set deviceId:id, -> _cb id
+  saveId = (id, _cb) -> chrome.storage.local.set deviceId: id, -> _cb id
 
   chrome.storage.local.get 'deviceId', (items) ->
     return cb items.deviceId if items.deviceId
@@ -78,7 +78,7 @@ getBrowserId = (cb) ->
     saveId generateNewId(), cb
 
 getCurrentTabsCount = (cb) ->
-  chrome.windows.getAll populate:true, (windows) ->
+  chrome.windows.getAll populate: true, (windows) ->
     cb windows.reduce (cnt, window) ->
       cnt + window.tabs.length
     , 0
@@ -153,10 +153,10 @@ updateBadge = ->
       setBadge tabs.today, if tabs.today > 0 then '#e51c23' else '#259b24'
 
 changeTabsCount = (n) ->
-    tabs.today + n
-    tabs.all + n
-    saveTabs()
-    updateBadge()
+  tabs.today + n
+  tabs.all + n
+  saveTabs()
+  updateBadge()
 
 changeBadge = ->
   todayOnBadge = not todayOnBadge
