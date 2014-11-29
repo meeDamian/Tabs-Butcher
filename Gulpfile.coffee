@@ -43,6 +43,7 @@ gulp.task 'compile', ->
     .pipe g.sourcemaps.write './'
     .pipe gulp.dest 'dist'
 
+
 gulp.task 'debug', ['clean'], ->
   gulp.start [
     'compile'
