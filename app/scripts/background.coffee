@@ -13,7 +13,6 @@ tabs =
   all: 0
   today: 0
 
-
 streakBadges =
   1:
     image: 'images/star1.png'
