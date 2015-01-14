@@ -31,6 +31,7 @@
     "gulp-csslint": "^0.1.5",
     "gulp-filter": "^2.0.0",
     "gulp-jshint": "^1.9.0",
+    "gulp-livereload": "^3.3.0",
     "gulp-load-plugins": "^0.7.1",
     "gulp-plumber": "^0.6.6",
     "gulp-sourcemaps": "^1.2.8",
@@ -42,7 +43,8 @@
     "jshint-stylish": "^1.0.0",
     "load-grunt-tasks": "~0.4.0",
     "stream-combiner": "^0.2.1",
-    "time-grunt": "~0.3.1"
+    "time-grunt": "~0.3.1",
+    "vinyl-paths": "^1.0.0"
   },
   "engines": {
     "node": ">=0.8.0"

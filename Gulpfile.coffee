@@ -4,6 +4,7 @@ gulp    = require 'gulp'
 g       = require('gulp-load-plugins')()
 
 g.del   = require 'del'
+g.vinyl = require 'vinyl-paths'
 combine = require 'stream-combiner'
 
 
@@ -11,23 +12,6 @@ APP_BASE = base: './app'
 MAPS_DIR = './'
 DIST_DIR = 'dist'
 
-
-# Moving stuff around
-cp = (file) ->
-  gulp.src 'app/' + file, APP_BASE
-    .pipe gulp.dest 'dist/'
-
-gulp.task 'clean', (cb) ->
-  g.del ['dist/'], cb
-
-gulp.task 'images',   -> cp 'images/**'
-gulp.task 'locales',  -> cp '_locales/**'
-gulp.task 'manifest', -> cp 'manifest.json'
-gulp.task 'copy', [
-  'images'
-  'locales'
-  'manifest'
-]
 
 # Linting
 gulp.task 'lintCoffee', ->
@@ -61,6 +45,29 @@ gulp.task 'lint', [
 ]
 
 
+# Building
+staticGlob = [
+  'app/images/**'
+  'app/_locales/**'
+  'app/manifest.json'
+  'app/**/*.js' # libs and other non-coffee
+]
+staticPipe = ->
+  filter = g.filter [
+    'app/**/*.js'
+  ]
+
+  combine filter,
+    g.uglify()
+    filter.restore()
+    gulp.dest 'dist'
+    g.livereload()
+
+gulp.task 'staticCopy', ->
+  gulp.src staticGlob, APP_BASE
+    .pipe staticPipe()
+
+
 stylusGlob = [
   'app/**/*.styl'
 ]
@@ -70,55 +77,93 @@ stylusPipe = ->
     g.stylus compress: true
     g.sourcemaps.write './'
     gulp.dest 'dist'
+    g.livereload()
 
 gulp.task 'compileStylus', ->
   gulp.src stylusGlob, APP_BASE
-  .pipe stylusPipe
+  .pipe stylusPipe()
 
 
 coffeeGlob = [
   'app/**/*.coffee'
+]
+coffeeDistGlob = [
+  'app/**/*.coffee'
   '!app/**/chromereload.coffee'
 ]
-
 coffeePipe = ->
   combine g.plumber(),
     g.sourcemaps.init()
     g.coffee().on 'error', g.util.log
-    g.uglify()
+    # g.uglify() # NOTE: uncomment to minify/obfuscate
     g.sourcemaps.write './'
     gulp.dest 'dist'
+    g.livereload()
 
 gulp.task 'compileCoffee', ->
   gulp.src coffeeGlob, APP_BASE
     .pipe coffeePipe()
 
 
-gulp.task 'compile', [
-  'compileStylus'
-  'compileCoffee'
-]
+# Watching
+deletionFilter = ->
+  g.filter (file) -> file.event isnt 'deleted'
 
+gulp.task 'watchCoffee', ->
+  deletedFilter = deletionFilter()
 
-deletedFilter = g.filter (file) -> file.event isnt 'deleted'
+  g.livereload.listen()
 
-gulp.task 'debug', ->
   g.watch coffeeGlob, APP_BASE
-    .pipe coffeePipe()
-
-  g.watch stylusGlob, APP_BASE
-    .pipe stylusPipe()
-
-  g.watch 'app/images/**', APP_BASE
     .pipe deletedFilter
-    .pipe gulp.dest 'dist/'
+    .pipe coffeePipe()
 
   deletedFilter.restore end: true
     .pipe gulp.dest 'dist'
-    .pipe g.clean()
+    .pipe g.vinyl (file, cb) ->
+      g.del file.replace(/.coffee$/, '.js{,.map}'), cb
 
-gulp.task 'lalala', ['clean'], ->
-  gulp.start [
-    'compile'
-    'copy'
-  ]
+
+gulp.task 'watchStylus', ->
+  deletedFilter = deletionFilter()
+
+  g.livereload.listen()
+
+  g.watch stylusGlob, APP_BASE
+    .pipe deletedFilter
+    .pipe stylusPipe()
+
+  deletedFilter.restore end: true
+    .pipe gulp.dest 'dist'
+    .pipe g.vinyl (file, cb) ->
+      g.del file.replace(/.styl$/, '.css{,.map}'), cb
+
+
+gulp.task 'watchStatic', ->
+  deletedFilter = deletionFilter()
+
+  g.livereload.listen()
+
+  g.watch staticGlob, APP_BASE
+    .pipe deletedFilter
+    .pipe staticPipe()
+
+  deletedFilter.restore end: true
+    .pipe gulp.dest 'dist'
+    .pipe g.vinyl g.del
+
+
+# User tasks
+gulp.task 'buildDebug', [
+  'staticCopy'
+  'compileCoffee'
+  'compileStylus'
+]
+
+gulp.task 'debug', [
+  'lint'
+  'buildDebug'
+  'watchCoffee'
+  'watchStylus'
+  'watchStatic'
+]
