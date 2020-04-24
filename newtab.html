@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New Tab | Kill Tabs Edition</title>
+
+    <link rel="stylesheet" href="newtab.css">
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@200;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="single" class="container mode">
+    <div class="counter">
+        <h1>🤔</h1>
+        <h2>🤔</h2>
+    </div>
+</div>
+
+<div id="dual" class="mode">
+    <div id="opened" class="container" title="Cumulative number of tabs opened since the date in bottom left corner">
+        <div class="counter">
+            <h1>🤔</h1>
+            <h2>opened</h2>
+        </div>
+    </div>
+
+    <span id="separator"></span>
+
+    <div id="closed" class="container" title="Cumulative number of tabs closed since the date in bottom left corner">
+        <div class="counter">
+            <h1>🤔</h1>
+            <h2>closed</h2>
+        </div>
+    </div>
+</div>
+
+<div id="random" class="container mode">
+    <img class="centered" src="" />
+</div>
+
+<span id="session-start" class="fading" title="Counting starts anew after 6 hours of no activity"><b id="since"></b></span>
+
+<span id="modes" class="fading">mode:
+    <a href="#" id="total">total</a> |
+    <a href="#" id="diff">difference</a> |
+    <a href="#" id="split">separate</a> |
+    <a href="#" id="fuck">fuck that</a>
+</span>
+
+<script src="newtab.js"></script>
+</body>
+</html>

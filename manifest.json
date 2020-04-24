@@ -1,0 +1,14 @@
+{
+  "name": "Tabs Butcher",
+  "version": "1.0",
+  "description": "Green background good. Tabs count go down. Dogs are better than cats.",
+  "permissions": ["storage", "tabs"],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "chrome_url_overrides" : {
+    "newtab": "newtab.html"
+  },
+  "manifest_version": 2
+}
