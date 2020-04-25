@@ -14,7 +14,7 @@ function fmtDate(ts, ago = true) {
 	}
 
 	const UNITS = ['second', 'minute', 'hour', 'day', 'week', 'month', 'year'];
-	const SEC_ARRAY = [ 60, 60, 24, 7, 365 / 7 / 12, 12];
+	const SEC_ARRAY = [60, 60, 24, 7, 365 / 7 / 12, 12];
 
 	let diff = (+new Date - ts) / 1000;
 
@@ -33,7 +33,7 @@ function fmtDate(ts, ago = true) {
 	if (idx === 0) return 'just now';
 	let unit = UNITS[Math.floor(idx / 2)];
 	if (diff > 1) unit += 's';
-	return `${diff} ${unit} ago`
+	return `${diff} ${unit} ago`;
 }
 
 function since(start) {
@@ -91,7 +91,7 @@ function refresh() {
 	local.get(['mode', 'last', 'start'], ({mode, last, start}) => {
 		populate({mode, last, start});
 
-		modes.map(m => {
+		modes.forEach(m => {
 			style(m, 'fontWeight', m === mode ? 'bold' : 'normal');
 			style(`${m}-view`, 'opacity', m === mode ? '1' : '0');
 		});
