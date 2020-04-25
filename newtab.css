@@ -1,5 +1,14 @@
+:root {
+    --red: hsla(0, 100%, 90%, .33);
+    --green: hsla(120, 100%, 90%, .33);
+}
+
 * {
     font-family: 'Mali', cursive;
+}
+
+body {
+    margin: 0;
 }
 
 .mode {
@@ -17,8 +26,13 @@
     position: fixed;
     z-index: 1;
     top: 0;
-    overflow-x: hidden;
-    padding-top: 20px;
+}
+
+#diff-view.bad {
+    background: radial-gradient(ellipse, transparent, var(--red));
+}
+#diff-view.good {
+    background: radial-gradient(ellipse, transparent, var(--green));
 }
 
 .centered {
@@ -32,8 +46,6 @@
 .counter {
     position: absolute;
     top: 45%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     text-align: center;
 }
 
@@ -42,7 +54,7 @@
     line-height: 0;
 }
 
-.counter h2  {
+.counter h2 {
     font-size: 5vh;
     line-height: 0;
 }
@@ -62,20 +74,20 @@
     background: radial-gradient(ellipse, black 0, black 50%, #0000001f 75%, transparent 80%, transparent 100%);
 }
 
-#dual .counter {
+#split-view .counter {
     transform: translate(0, -50%);
 }
 
 #opened {
     width: 50%;
     left: 0;
-    background-color: white;
+    background: linear-gradient(90deg, var(--red), transparent);
 }
 
 #closed {
     width: 50%;
     right: 0;
-    background-color: whitesmoke;
+    background: linear-gradient(270deg, var(--green), transparent);
 }
 
 #opened .counter {
@@ -90,7 +102,7 @@
 /*
     FOOTER
  */
-#session-start  {
+#session-start {
     position: fixed;
     bottom: 1vh;
     left: 1vw;
@@ -112,6 +124,7 @@
     opacity: .5;
     transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .fading:hover {
     opacity: 1;
 }
