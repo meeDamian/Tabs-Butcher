@@ -46,7 +46,7 @@ class Tabs {
 	// NOTE: Only sign of `n` matters.
 	set delta(n) {
 		if (this.expired) {
-			this.reset(n);
+			return this.reset(n);
 		}
 
 		if (n > 0) this.opened++;
