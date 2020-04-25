@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New Tab | Kill Tabs Edition</title>
+
+    <link rel="stylesheet" href="newtab.css">
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@200;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="total-view" class="container mode" title="Total amount of tabs currently opened">
+    <div class="counter centered">
+        <h1>🤔</h1>
+        <h2>tabs</h2>
+    </div>
+</div>
+
+<div id="diff-view" class="container mode bad" title="Change in the number of tabs during current session">
+    <div class="counter centered">
+        <h1>🤔</h1>
+        <h2>change</h2>
+    </div>
+</div>
+
+<div id="split-view" class="mode">
+    <div id="opened" class="container" title="Cumulative number of tabs opened since the date in bottom left corner">
+        <div class="counter">
+            <h1>🤔</h1>
+            <h2>opened</h2>
+        </div>
+    </div>
+
+    <span id="separator"></span>
+
+    <div id="closed" class="container" title="Cumulative number of tabs closed since the date in bottom left corner">
+        <div class="counter">
+            <h1>🤔</h1>
+            <h2>closed</h2>
+        </div>
+    </div>
+</div>
+
+<div id="fuck-view" class="container mode">
+    <img class="centered" src="" alt=""/>
+</div>
+
+<footer>
+    <span id="session-start" class="fading"><b id="since"></b></span>
+
+    <span id="modes" class="fading">mode:
+        <a href="#" id="total">total</a> |
+        <a href="#" id="diff">difference</a> |
+        <a href="#" id="split">separate</a> |
+        <a href="#" id="fuck">fuck that</a>
+    </span>
+</footer>
+
+<script src="newtab.js"></script>
+</body>
+</html>
