@@ -3,35 +3,34 @@
 const RESET_AFTER_HOURS = 6;
 const HOUR = 36e5; // 60 * 60 * 1000;
 
+const {local} = chrome.storage;
+
 class Tabs {
 	constructor() {
 		this.restore();
 	}
 
-	setTo({ts = +new Date, base, opened = 0, closed = 0}) {
-		this.ts = ts;
-		this.base = base;
-		this.opened = opened;
-		this.closed = closed;
+	setTo(last, delta) {
+		if (!last) {
+			local.set({start: +new Date});
+		}
+
+		const {ts = +new Date, base, opened = 0, closed = 0} = last || {};
+
+		chrome.tabs.query({}, tabs => {
+			this.ts = ts;
+			this.base = base || tabs.length;
+			this.opened = opened;
+			this.closed = closed;
+
+			if (delta) {
+				this.delta = delta;
+			}
+		});
 	}
 
 	restore() {
-		local.get('last', ({last}) => {
-			if (last) {
-				return this.setTo(last);
-			}
-
-			this.reset();
-		});
-	}
-
-	reset(n = 0) {
-		chrome.tabs.query({}, tabs => {
-			this.setTo({base: tabs.length});
-			this.delta = n;
-		});
-
-		local.set({start: +new Date});
+		local.get('last', ({last}) => this.setTo(last));
 	}
 
 	get expired() {
@@ -49,7 +48,7 @@ class Tabs {
 	// NOTE: Only the sign of `n` matters.
 	set delta(n) {
 		if (this.expired) {
-			return this.reset(n);
+			return this.setTo(undefined, n);
 		}
 
 		if (n === 0) return;
@@ -60,18 +59,18 @@ class Tabs {
 	}
 
 	save() {
+		// Get prop values from all getters
 		const {total, delta, expired} = this;
-		const last = {...this, total, delta, expired};
-		console.log(last);
 
+		// Combine "raw props" with all "getter props"
+		const last = {...this, total, delta, expired};
+
+		console.log(last);
 		local.set({last});
 	}
 }
 
-function initState() {
-	const allTabs = new Tabs();
+const allTabs = new Tabs();
 
-	const {onCreated, onRemoved} = chrome.tabs;
-	onCreated.addListener(() => allTabs.delta = 1);
-	onRemoved.addListener(() => allTabs.delta = -1);
-}
+chrome.tabs.onCreated.addListener(() => allTabs.delta = 1);
+chrome.tabs.onRemoved.addListener(() => allTabs.delta = -1);

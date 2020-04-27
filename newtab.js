@@ -44,17 +44,18 @@ function since(start) {
 
 function fuck() {
 	const GIPHY_API_KEY = 'G6LJJDUAk2KaGiBAP1u280ypodWCk8iu';
-	const queries = ['zoomies', 'squirrel', 'dogs', 'puppies'];
+	const queries = ['zoomies', 'squirrel', 'dogs', 'puppies', 'cute', 'napping', 'seal', 'duckling'];
 
 	const randomQuery = queries[Math.floor(Math.random() * queries.length)];
 
 	fetch(`http://api.giphy.com/v1/gifs/random?api_key=${GIPHY_API_KEY}&tag=${randomQuery}`)
 		.then(res => res.json())
-		.then(({data: {image_url, title}}) => {
-			const img = document.querySelector('#fuck-view img');
-			img.setAttribute('src', image_url);
-			img.setAttribute('title', title);
-			img.setAttribute('alt', title);
+		.then(({data: {url, image_mp4_url, title}}) => {
+			const vid = document.querySelector('#fuck-view video');
+			vid.setAttribute('src', image_mp4_url);
+			vid.setAttribute('alt', title);
+
+			document.querySelector('#fuck-view a').setAttribute('href', url);
 		});
 }
 
