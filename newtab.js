@@ -5,8 +5,9 @@ const modes = ['diff', 'total', 'split', 'fuck'];
 const {local} = chrome.storage;
 
 const style = (id, propName, value) => document.getElementById(id).style[propName] = value;
-const html = (selector, value, propName = 'innerHTML') => document.querySelector(selector)[propName] = value;
-const counter = (id, value) => html(`#${id} h1`, value);
+const setProp = (selector, propName, value) => document.querySelector(selector)[propName] = value;
+const setContent = (selector, value) => setProp(selector, 'innerHTML', value);
+const counter = (id, value) => setContent(`#${id} h1`, value);
 
 function fmtDate(ts, ago = true) {
 	if (!ago) {
@@ -17,7 +18,6 @@ function fmtDate(ts, ago = true) {
 	const SEC_ARRAY = [60, 60, 24, 7, 365 / 7 / 12, 12];
 
 	let diff = (+new Date - ts) / 1000;
-
 	let idx = 0;
 
 	for (; diff >= SEC_ARRAY[idx] && idx < SEC_ARRAY.length; idx++) {
@@ -25,9 +25,7 @@ function fmtDate(ts, ago = true) {
 	}
 
 	diff = Math.floor(diff);
-
 	idx *= 2;
-
 	if (diff > (idx === 0 ? 9 : 1)) idx += 1;
 
 	if (idx === 0) return 'just now';
@@ -39,8 +37,8 @@ function fmtDate(ts, ago = true) {
 function since(start) {
 	if (!start) return;
 
-	html('#since', fmtDate(start));
-	html('#since', fmtDate(start, false), 'title');
+	setContent('#since', fmtDate(start));
+	setProp('#since', 'title', fmtDate(start, false));
 	style('session-start', 'display', 'block');
 }
 
@@ -89,36 +87,33 @@ function refresh() {
 	style('session-start', 'display', 'none');
 
 	local.get(['mode', 'last', 'start'], ({mode, last, start}) => {
+		if (!mode) {
+			local.set({mode: 'split'});
+			return;
+		}
+
 		populate({mode, last, start});
 
-		modes.forEach(m => {
-			style(m, 'fontWeight', m === mode ? 'bold' : 'normal');
-			style(`${m}-view`, 'opacity', m === mode ? '1' : '0');
-		});
+		modes
+			.filter(m => m !== mode)
+			.forEach(m => {
+				style(m, 'fontWeight', 'normal');
+				style(`${m}-view`, 'opacity', '0');
+			});
+
+		style(mode, 'fontWeight', 'bold');
+		style(`${mode}-view`, 'opacity', '1');
 	});
 }
 
 // Register mode-changing click-listeners on footer anchors
 for (const mode of modes) {
-	document.getElementById(mode).onclick = () => {
+	document.getElementById(mode).addEventListener('click', () => {
 		local.set({mode}, refresh);
 		return false;
-	};
+	})
 }
 
-// Refresh content of current tab when it gains focus
-const {getCurrent, onActivated, onCreated, onRemoved} = chrome.tabs;
-getCurrent(({id}) => {
-	onActivated.addListener(({tabId}) => {
-		if (id === tabId) {
-			refresh();
-		}
-	});
-});
-
-// Update counters in current tab if other tabs open/close
-const delayedRefresh = () => setTimeout(refresh, 500);
-onCreated.addListener(delayedRefresh);
-onRemoved.addListener(delayedRefresh);
+chrome.storage.onChanged.addListener(refresh);
 
 refresh();
