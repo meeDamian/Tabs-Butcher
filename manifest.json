@@ -8,6 +8,7 @@
   "incognito": "spanning",
   "background": {
     "scripts": [
+      "utils.js",
       "bkgBadge.js",
       "bkgState.js"
     ],

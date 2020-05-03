@@ -70,7 +70,66 @@ class Tabs {
 	}
 }
 
+function appendHistory(event) {
+	local.get('history', ({history = []}) => {
+		local.getBytesInUse(null, total => {
+			if (total >= .9 * local.QUOTA_BYTES) {
+				console.log(`Used storage exceeds quota: ${history.length} history records ${total}/${local.QUOTA_BYTES}`);
+				history = history.slice(-Math.floor(history.length * .1));
+			}
+
+			event.usedStorage = `${(100 * total / local.QUOTA_BYTES).toFixed(2)}%`;
+
+			history.push(event);
+
+			local.set({history});
+
+			// Only print last 42 elements
+			console.log(history.slice(-42));
+		});
+	});
+}
+
+
+function change(n) {
+	if (n === 0) return () => {};
+
+	return tab => {
+		allTabs.delta = n;
+
+		const o = {ts: +new Date};
+
+		if (n < 0) {
+			o.event = 'tabClose';
+			o.id = tab;
+		}
+
+		if (n > 0) {
+			const {id, windowId, openerTabId} = tab || {};
+
+			o.event = 'tabOpen';
+			o.id = id;
+			o.windowId = windowId;
+			o.openerTabId = openerTabId;
+		}
+
+		local.get('start', ({start}) => {
+			if (start) {
+				o.session = {
+					start,
+					duration: o.ts - start,
+					ago: fmtDate(start, true)
+				};
+			}
+
+			appendHistory(o);
+		});
+	};
+}
+
 const allTabs = new Tabs();
 
-chrome.tabs.onCreated.addListener(() => allTabs.delta = 1);
-chrome.tabs.onRemoved.addListener(() => allTabs.delta = -1);
+chrome.tabs.onCreated.addListener(change(1));
+chrome.tabs.onRemoved.addListener(change(-1));
+
+chrome.runtime.onMessage.addListener((data, sender) => appendHistory({sender, data}));
