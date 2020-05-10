@@ -60,6 +60,7 @@ function populate({mode, last, start}) {
 
 async function refresh() {
 	style('session-start', 'display', 'none');
+	style('fuck-view', 'display', 'none');
 
 	const {mode, last, start} = await localGet(['mode', 'last', 'start']);
 
@@ -77,6 +78,9 @@ async function refresh() {
 			style(`${m}-view`, 'opacity', '0');
 		});
 
+	if (mode === 'fuck') {
+		style('fuck-view', 'display', 'block');
+	}
 	style(mode, 'fontWeight', 'bold');
 	style(`${mode}-view`, 'opacity', '1');
 }

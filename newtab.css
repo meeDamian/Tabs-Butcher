@@ -1,6 +1,32 @@
 :root {
     --red: hsla(0, 100%, 90%, .33);
     --green: hsla(120, 100%, 90%, .33);
+    --bkg: whitesmoke;
+    --text: black;
+    --base-fading-opacity: .5;
+    --loader-color: var(--text);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --red: hsla(0, 100%, 10%, .11);
+        --green: hsla(120, 100%, 10%, .11);
+        --bkg: #121212;
+        --text: darkgray;
+        --base-fading-opacity: .6;
+        --loader-color: white;
+    }
+
+    #modes a {
+        color: dodgerblue;
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    #fuck-view .loader {
+        background-color: var(--bkg);
+        filter: contrast(5);
+    }
 }
 
 * {
@@ -9,6 +35,8 @@
 
 body {
     margin: 0;
+    background: var(--bkg);
+    color: var(--text);
 }
 
 .mode {
@@ -31,6 +59,7 @@ body {
 #diff-view.bad {
     background: radial-gradient(ellipse, transparent, var(--red));
 }
+
 #diff-view.good {
     background: radial-gradient(ellipse, transparent, var(--green));
 }
@@ -71,7 +100,7 @@ body {
     width: 3px;
     transform: translate(-1.5px, -50%);
     z-index: 2;
-    background: radial-gradient(ellipse, black 0, black 50%, #0000001f 75%, transparent 80%, transparent 100%);
+    background: radial-gradient(ellipse, var(--text) 0, var(--text) 50%, #0000001f 75%, transparent 80%, transparent 100%);
 }
 
 #split-view .counter {
@@ -110,7 +139,7 @@ body {
 }
 
 #session-start:before {
-    content: 'Since: ';
+    content: 'Started: ';
 }
 
 #modes {
@@ -121,7 +150,7 @@ body {
 }
 
 .fading {
-    opacity: .5;
+    opacity: var(--base-fading-opacity);
     transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -139,8 +168,7 @@ body {
     align-items: center;
     height: 100%;
     width: 100%;
-    filter: contrast(5);
-    background-color: white;
+    filter: contrast(8);
 }
 
 /**
@@ -149,31 +177,31 @@ body {
  * Dot Hourglass
  * ==============================================
  */
-.dot-hourglass {
+.dot-hourglass,
+.dot-hourglass::before,
+.dot-hourglass::after {
     width: 12px;
     height: 12px;
     border-radius: 6px;
-    background-color: black;
+    background-color: var(--loader-color);
     color: transparent;
-    margin: -1px 0;
     filter: blur(2px);
+}
+
+.dot-hourglass {
+    margin: -1px 0;
     transform-origin: 5px 20px;
     animation: dot-hourglass 2.4s infinite ease-in-out;
     animation-delay: .6s;
 }
 
-.dot-hourglass::before, .dot-hourglass::after {
+.dot-hourglass::before,
+.dot-hourglass::after {
     content: '';
     display: inline-block;
     position: absolute;
     top: 0;
     left: 0;
-    width: 12px;
-    height: 12px;
-    border-radius: 6px;
-    background-color: black;
-    color: transparent;
-    filter: blur(2px);
 }
 
 .dot-hourglass::before {
