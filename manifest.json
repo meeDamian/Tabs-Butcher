@@ -1,10 +1,13 @@
 {
   "name": "Tabs Butcher",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "manifest_version": 2,
   "author": "Damian Mee <tabs@meedamian.com>",
-  "description": "Green background good. Tabs count go down. Dogs rule supreme",
-  "permissions": ["storage", "tabs"],
+  "description": "Green tint good. Tabs count go down. Dogs rule supreme",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
   "incognito": "spanning",
   "background": {
     "scripts": [
@@ -21,7 +24,7 @@
     },
     "default_title": "Tabs Butcher"
   },
-  "chrome_url_overrides" : {
+  "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
   "icons": {

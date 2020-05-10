@@ -1,5 +1,10 @@
 'use strict';
 
+const promisify = (fn, bind) => arg => new Promise(resolve => fn.bind(bind)(arg, resolve));
+
+// Takes timestamp ts, and returns it formatted as either:
+//	if (ago == true)  => "2020-12-31 23:59:59"
+//	if (ago == false) => "29 minutes ago"
 function fmtDate(ts, ago = true) {
 	if (!ago) {
 		return new Date(ts).toLocaleString('sv');
@@ -24,3 +29,4 @@ function fmtDate(ts, ago = true) {
 	if (diff > 1) unit += 's';
 	return `${diff} ${unit} ago`;
 }
+
