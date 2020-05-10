@@ -79,7 +79,6 @@ async function refresh() {
 
 	style(mode, 'fontWeight', 'bold');
 	style(`${mode}-view`, 'opacity', '1');
-
 }
 
 // Register mode-changing click-listeners on footer anchors

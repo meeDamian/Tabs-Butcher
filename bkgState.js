@@ -78,11 +78,16 @@ class Tabs {
 		return this.setTo((await localGet('last')).last);
 	}
 
-	async setTo({ts = +new Date, base, opened = 0, closed = 0} = {}) {
+	async setTo({ts, base, opened = 0, closed = 0} = {}) {
 		this.base = base || await this.currentTabs();
-		this.ts = ts;
 		this.opened = opened;
 		this.closed = closed;
+
+		if (!ts) {
+			ts = +new Date;
+			await localSet({start: ts});
+		}
+		this.ts = ts;
 	}
 
 	async currentTabs() {
@@ -141,8 +146,6 @@ class Tabs {
 		}
 
 		await appendHistory('reset', o);
-
-		await localSet({start: now});
 
 		return this.setTo({});
 	}
