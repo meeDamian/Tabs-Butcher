@@ -3,38 +3,161 @@
 const RESET_AFTER_HOURS = 6;
 const HOUR = 36e5; // 60 * 60 * 1000;
 
-const {local} = chrome.storage;
+const localBytes = promisify(local.getBytesInUse.bind(local));
+const tabsQuery = promisify(chrome.tabs.query.bind(chrome.tabs));
 
-class Tabs {
-	constructor() {
-		this.restore();
-	}
+const appendHistory = (() => {
+	const fmt = (v, unit, p = 2) => `${v.toPrecision(p)}${unit}`;
+	const toMB = v => fmt(v / (1 << 20), 'MB');
 
-	setTo(last, delta) {
-		if (!last) {
-			local.set({start: +new Date});
+	const queue = [];
+
+	async function trimStorageIfNeeded(history) {
+		const used = await localBytes(null);
+
+		if (used < .9 * local.QUOTA_BYTES) {
+			return [history, used];
 		}
 
-		const {ts = +new Date, base, opened = 0, closed = 0} = last || {};
+		const excess = Math.floor(history.length * .1);
 
-		chrome.tabs.query({}, tabs => {
-			this.ts = ts;
-			this.base = base || tabs.length;
-			this.opened = opened;
-			this.closed = closed;
-
-			if (delta) {
-				this.delta = delta;
+		console.warn('WARNING: Used storage exceeds 90% of allowed quota, trimming oldest entries…', {
+			storage: {
+				allowed: toMB(local.QUOTA_BYTES),
+				used: toMB(used),
+				percent: fmt(100 * used / local.QUOTA_BYTES, '%')
+			},
+			rows: {
+				current: history.length,
+				'to be trimmed': excess
 			}
 		});
+
+		return [history.slice(-excess), used];
 	}
 
-	restore() {
-		local.get('last', ({last}) => this.setTo(last));
+	async function append(event) {
+		const {history = []} = await localGet('history');
+		const [h, used] = await trimStorageIfNeeded(history);
+		if (event.event === 'reset') {
+			event.usedStorage = fmt(100 * used / local.QUOTA_BYTES, '%');
+		}
+
+		h.push(event);
+
+		await localSet({history: h});
+	}
+
+	return (eventName, data) => {
+		data.event = eventName;
+
+		const promise = Promise.all(queue)
+			.then(() => append(data)).catch()
+			.then(() => void queue.shift());
+
+		queue.push(promise);
+	};
+})();
+
+
+//
+//	Manage global counts of tabs.
+//
+// Responsibilities:
+//	* Restore from storage upon init
+//	* Save to storage on change
+//	* Keep counts of: opened/closed/delta since session start
+//	* Keep track of time of last change, and
+//		* Reset self when that time is longer than RESET_AFTER_HOURS hours
+class Tabs {
+	constructor() {
+		this.ready = this.restore();
+	}
+
+	async restore() {
+		return this.setTo((await localGet('last')).last);
+	}
+
+	async setTo({ts = +new Date, base, opened = 0, closed = 0} = {}) {
+		this.base = base || await this.currentTabs();
+		this.ts = ts;
+		this.opened = opened;
+		this.closed = closed;
+	}
+
+	async currentTabs() {
+		return (await tabsQuery({})).length;
+	}
+
+	async increment(prop, data) {
+		await this.ready;
+
+		if (this.expired) {
+			await this.reset();
+		}
+
+		this[prop]++;
+
+		await this.save();
+
+		if (!data) {
+			return;
+		}
+
+		data.ts = +new Date;
+
+		const {start} = await localGet('start');
+
+		if (start) {
+			data.session = {
+				start,
+				duration: data.ts - start,
+				ago: fmtDate(start, true)
+			};
+		}
+
+		return appendHistory(`${prop}Tab`, data);
+	}
+
+	inc(data) {
+		return this.increment('opened', data);
+	}
+
+	dec(data) {
+		return this.increment('closed', data);
 	}
 
 	get expired() {
-		return +new Date - this.ts >= RESET_AFTER_HOURS * HOUR;
+		return (+new Date - this.ts) >= (RESET_AFTER_HOURS * HOUR);
+	}
+
+	async reset() {
+		const now = +new Date;
+
+		const o = {ts: now};
+		if (this.ts) {
+			o.last = this.ts;
+			o.since = now - this.ts;
+		}
+
+		await appendHistory('reset', o);
+
+		await localSet({start: now});
+
+		return this.setTo({});
+	}
+
+	async save() {
+		// Get prop values from all getters
+		const {total, delta, expired} = this;
+
+		// Combining "raw props" with all "getter props"
+		const last = {
+			...this, // "raw"
+			total, delta, expired // "getters"
+		};
+
+		await localSet({last});
 	}
 
 	get total() {
@@ -44,92 +167,15 @@ class Tabs {
 	get delta() {
 		return this.opened - this.closed;
 	}
-
-	// NOTE: Only the sign of `n` matters.
-	set delta(n) {
-		if (this.expired) {
-			return this.setTo(undefined, n);
-		}
-
-		if (n === 0) return;
-		if (n > 0) this.opened++;
-		if (n < 0) this.closed++;
-
-		this.save();
-	}
-
-	save() {
-		// Get prop values from all getters
-		const {total, delta, expired} = this;
-
-		// Combine "raw props" with all "getter props"
-		const last = {...this, total, delta, expired};
-
-		console.log(last);
-		local.set({last});
-	}
-}
-
-function appendHistory(event) {
-	local.get('history', ({history = []}) => {
-		local.getBytesInUse(null, total => {
-			if (total >= .9 * local.QUOTA_BYTES) {
-				console.log(`Used storage exceeds quota: ${history.length} history records ${total}/${local.QUOTA_BYTES}`);
-				history = history.slice(-Math.floor(history.length * .1));
-			}
-
-			event.usedStorage = `${(100 * total / local.QUOTA_BYTES).toFixed(2)}%`;
-
-			history.push(event);
-
-			local.set({history});
-
-			// Only print last 42 elements
-			console.log(history.slice(-42));
-		});
-	});
-}
-
-
-function change(n) {
-	if (n === 0) return () => {};
-
-	return tab => {
-		allTabs.delta = n;
-
-		const o = {ts: +new Date};
-
-		if (n < 0) {
-			o.event = 'tabClose';
-			o.id = tab;
-		}
-
-		if (n > 0) {
-			const {id, windowId, openerTabId} = tab || {};
-
-			o.event = 'tabOpen';
-			o.id = id;
-			o.windowId = windowId;
-			o.openerTabId = openerTabId;
-		}
-
-		local.get('start', ({start}) => {
-			if (start) {
-				o.session = {
-					start,
-					duration: o.ts - start,
-					ago: fmtDate(start, true)
-				};
-			}
-
-			appendHistory(o);
-		});
-	};
 }
 
 const allTabs = new Tabs();
 
-chrome.tabs.onCreated.addListener(change(1));
-chrome.tabs.onRemoved.addListener(change(-1));
+const inc = async ({id, windowId, openerTabId}) => allTabs.inc({id, windowId, openerTabId});
+const dec = id => allTabs.dec({id});
 
-chrome.runtime.onMessage.addListener((data, sender) => appendHistory({sender, data}));
+chrome.tabs.onCreated.addListener(inc);
+chrome.tabs.onRemoved.addListener(dec);
+
+chrome.runtime.onMessage.addListener((data, sender) => appendHistory(undefined, {sender, data}));
+

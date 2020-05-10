@@ -132,3 +132,90 @@ body {
 #modes a {
     text-decoration: none;
 }
+
+#fuck-view .loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    filter: contrast(5);
+    background-color: white;
+}
+
+/**
+ * ==============================================
+ * Experiment: Gooey Effect
+ * Dot Hourglass
+ * ==============================================
+ */
+.dot-hourglass {
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+    background-color: black;
+    color: transparent;
+    margin: -1px 0;
+    filter: blur(2px);
+    transform-origin: 5px 20px;
+    animation: dot-hourglass 2.4s infinite ease-in-out;
+    animation-delay: .6s;
+}
+
+.dot-hourglass::before, .dot-hourglass::after {
+    content: '';
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+    background-color: black;
+    color: transparent;
+    filter: blur(2px);
+}
+
+.dot-hourglass::before {
+    top: 30px;
+}
+
+.dot-hourglass::after {
+    animation: dot-hourglass-after 2.4s infinite cubic-bezier(0.65, 0.05, 0.36, 1);
+}
+
+@keyframes dot-hourglass {
+    0% {
+        transform: rotateZ(0deg);
+    }
+    25% {
+        transform: rotateZ(180deg);
+    }
+    50% {
+        transform: rotateZ(180deg);
+    }
+    75% {
+        transform: rotateZ(360deg);
+    }
+    100% {
+        transform: rotateZ(360deg);
+    }
+}
+
+@keyframes dot-hourglass-after {
+    0% {
+        transform: translateY(0);
+    }
+    25% {
+        transform: translateY(30px);
+    }
+    50% {
+        transform: translateY(30px);
+    }
+    75% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}

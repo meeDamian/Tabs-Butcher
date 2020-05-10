@@ -2,8 +2,6 @@
 
 const modes = ['diff', 'total', 'split', 'fuck'];
 
-const {local} = chrome.storage;
-
 const style = (id, propName, value) => document.getElementById(id).style[propName] = value;
 const setProp = (selector, propName, value) => document.querySelector(selector)[propName] = value;
 const setContent = (selector, value) => setProp(selector, 'innerHTML', value);
@@ -17,21 +15,22 @@ function since(start) {
 	style('session-start', 'display', 'block');
 }
 
-function fuck() {
+async function fuck() {
+	fuck = () => {};
+
 	const GIPHY_API_KEY = 'G6LJJDUAk2KaGiBAP1u280ypodWCk8iu';
 	const queries = ['zoomies', 'squirrel', 'dogs', 'puppies', 'cute', 'napping', 'seal', 'duckling'];
 
 	const randomQuery = queries[Math.floor(Math.random() * queries.length)];
 
-	fetch(`http://api.giphy.com/v1/gifs/random?api_key=${GIPHY_API_KEY}&tag=${randomQuery}`)
-		.then(res => res.json())
-		.then(({data: {url, image_mp4_url, title}}) => {
-			const vid = document.querySelector('#fuck-view video');
-			vid.setAttribute('src', image_mp4_url);
-			vid.setAttribute('alt', title);
+	const res = await fetch(`http://api.giphy.com/v1/gifs/random?api_key=${GIPHY_API_KEY}&tag=${randomQuery}`);
+	const {data: {url, image_mp4_url, title}} = await res.json();
 
-			document.querySelector('#fuck-view a').setAttribute('href', url);
-		});
+	const vid = document.querySelector('#fuck-view video');
+	vid.setAttribute('src', image_mp4_url);
+	vid.setAttribute('alt', title);
+
+	document.querySelector('#fuck-view a').setAttribute('href', url);
 }
 
 function populate({mode, last, start}) {
@@ -59,37 +58,38 @@ function populate({mode, last, start}) {
 	}
 }
 
-function refresh() {
+async function refresh() {
 	style('session-start', 'display', 'none');
 
-	local.get(['mode', 'last', 'start'], ({mode, last, start}) => {
-		if (!mode) {
-			local.set({mode: 'split'});
-			return;
-		}
+	const {mode, last, start} = await localGet(['mode', 'last', 'start']);
 
-		populate({mode, last, start});
+	if (!mode) {
+		await localSet({mode: 'split'});
+		return false;
+	}
 
-		modes
-			.filter(m => m !== mode)
-			.forEach(m => {
-				style(m, 'fontWeight', 'normal');
-				style(`${m}-view`, 'opacity', '0');
-			});
+	populate({mode, last, start});
 
-		style(mode, 'fontWeight', 'bold');
-		style(`${mode}-view`, 'opacity', '1');
-	});
+	modes
+		.filter(m => m !== mode)
+		.forEach(m => {
+			style(m, 'fontWeight', 'normal');
+			style(`${m}-view`, 'opacity', '0');
+		});
+
+	style(mode, 'fontWeight', 'bold');
+	style(`${mode}-view`, 'opacity', '1');
+
 }
 
 // Register mode-changing click-listeners on footer anchors
 for (const mode of modes) {
 	document.getElementById(mode).addEventListener('click', () => {
-		local.set({mode}, refresh);
+		localSet({mode}).then(refresh);
 		return false;
 	})
 }
 
 chrome.storage.onChanged.addListener(refresh);
 
-refresh();
+setTimeout(refresh, 0);
