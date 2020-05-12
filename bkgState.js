@@ -142,7 +142,8 @@ class Tabs {
 		const o = {ts: now};
 		if (this.ts) {
 			o.last = this.ts;
-			o.since = now - this.ts;
+			o.duration = now - this.ts;
+			o.lastEnded = fmtDate(this.ts, true);
 		}
 
 		await appendHistory('reset', o);
