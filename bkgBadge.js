@@ -1,8 +1,6 @@
 'use strict';
 
-const [updateBadge, nextMode] = (() => {
-	const MODES = ['diff', 'total', 'fuck'];
-
+const updateBadge = (() => {
 	const {setBadgeText, setBadgeBackgroundColor, setTitle} = chrome.browserAction;
 	const {name: APP_NAME} = chrome.runtime.getManifest();
 
@@ -13,12 +11,10 @@ const [updateBadge, nextMode] = (() => {
 		setTitle({
 			title: [APP_NAME, mode ? `mode: ${mode}` : undefined].filter(v => !!v).join(' | ')
 		});
-
 	}
 
 	async function updateBadge() {
 		const {mode, last = {}} = await localGet(['mode', 'last']);
-
 		const {total, delta} = last;
 
 		if (mode === 'fuck') return setBadge();
@@ -33,27 +29,12 @@ const [updateBadge, nextMode] = (() => {
 		setBadge(mode, delta, delta > 0 ? '#F00' : '#0F0');
 	}
 
-	async function nextMode() {
-		const {mode} = await localGet(['mode']);
-		const idx = MODES.indexOf(mode) + 1;
-
-		await localSet({mode: MODES[idx % MODES.length]})
-			.then(updateBadge);
-	}
-
-	return [updateBadge, nextMode];
+	return updateBadge;
 })();
-
-
-// Make badge clicks toggle through modes
-chrome.browserAction.onClicked.addListener(nextMode);
 
 // Update badge whenever sth new is saved
 chrome.storage.onChanged.addListener(updateBadge);
 
-// Update badge whenever browser starts
-chrome.runtime.onStartup.addListener(updateBadge);
 
-// Update badge right after extension is installed
-chrome.runtime.onInstalled.addListener(updateBadge);
-
+// Make badge clicks toggle through modes
+chrome.browserAction.onClicked.addListener(() => nextMode(true));

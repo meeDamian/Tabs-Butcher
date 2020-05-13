@@ -7,6 +7,28 @@ const {local} = chrome.storage;
 const localGet = promisify(local.get.bind(local));
 const localSet = promisify(local.set.bind(local));
 
+const fetchJson = url => fetch(url).then(r => r.json());
+
+const MODES = Object.freeze({
+	a: 'total',
+	s: 'split',
+	d: 'diff',
+	f: 'fuck'
+});
+
+async function nextMode(skipSplit) {
+	const {mode} = await localGet('mode');
+	const modes = Object.values(MODES);
+
+	let idx = modes.indexOf(mode) + 1;
+	if (skipSplit && idx === modes.indexOf('split')) {
+		idx++;
+	}
+
+	await localSet({mode: modes[idx % modes.length]});
+}
+
+
 // Takes timestamp ts, and returns it formatted as either:
 //	if (ago == true)  => "2020-12-31 23:59:59"
 //	if (ago == false) => "29 minutes ago"
