@@ -37,15 +37,17 @@ const appendHistory = (() => {
 	}
 
 	async function append(event) {
-		const {history = []} = await localGet('history');
-		const [h, used] = await trimStorageIfNeeded(history);
+		let used, {history = []} = await localGet('history');
+
+		[history, used] = await trimStorageIfNeeded(history);
+
 		if (event.event === 'reset') {
 			event.usedStorage = fmt(100 * used / local.QUOTA_BYTES, '%');
 		}
 
-		h.push(event);
+		history.push(event);
 
-		await localSet({history: h});
+		await localSet({history});
 	}
 
 	return (eventName, data) => {
@@ -101,27 +103,25 @@ class Tabs {
 			await this.reset();
 		}
 
+		this.ts = +new Date;
 		this[prop]++;
 
-		await this.save();
+		const last = await this.save();
 
-		if (!data) {
-			return;
+		if (data) {
+			last.data = data;
 		}
 
-		data.ts = +new Date;
-
 		const {start} = await localGet('start');
-
 		if (start) {
-			data.session = {
+			last.session = {
 				start,
-				duration: data.ts - start,
+				duration: last.ts - start,
 				ago: fmtDate(start, true)
 			};
 		}
 
-		return appendHistory(`${prop}Tab`, data);
+		return appendHistory(`${prop}Tab`, last);
 	}
 
 	inc(data) {
@@ -161,7 +161,11 @@ class Tabs {
 			total, delta, expired // "getters"
 		};
 
+		delete last.ready;
+
 		await localSet({last});
+
+		return last;
 	}
 
 	get total() {
