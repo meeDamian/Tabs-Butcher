@@ -8,8 +8,8 @@ const setCounter = (id, value) => setContent(`#${id} h1`, value);
 function started(start) {
 	if (!start) return;
 
-	setContent('#since', fmtDate(start));
-	setProp('#since', 'title', fmtDate(start, false));
+	setContent('#since', fmtTsAgo(start));
+	setProp('#since', 'title', fmtTsSane(start));
 	style('session-start', 'display', 'block');
 }
 

@@ -28,15 +28,11 @@ async function nextMode(skipSplit) {
 	await localSet({mode: modes[idx % modes.length]});
 }
 
+// Takes timestamp ts, returns it formatted as ex: "2020-12-31 23:59:59"
+const fmtTsSane = ts => new Date(ts).toLocaleString('sv');
 
-// Takes timestamp ts, and returns it formatted as either:
-//	if (ago == true)  => "2020-12-31 23:59:59"
-//	if (ago == false) => "29 minutes ago"
-function fmtDate(ts, ago = true) {
-	if (!ago) {
-		return new Date(ts).toLocaleString('sv');
-	}
-
+// Takes timestamp ts, returns it formatted as ex: "29 minutes ago"
+function fmtTsAgo(ts) {
 	const UNITS = ['second', 'minute', 'hour', 'day', 'week', 'month', 'year'];
 	const SEC_ARRAY = [60, 60, 24, 7, 365 / 7 / 12, 12];
 

@@ -112,15 +112,6 @@ class Tabs {
 			last.data = data;
 		}
 
-		const {start} = await localGet('start');
-		if (start) {
-			last.session = {
-				start,
-				duration: last.ts - start,
-				ago: fmtDate(start, true)
-			};
-		}
-
 		return appendHistory(`${prop}Tab`, last);
 	}
 
@@ -138,12 +129,25 @@ class Tabs {
 
 	async reset() {
 		const now = +new Date;
+		const {start} = await localGet('start');
 
-		const o = {ts: now};
+		const o = {
+			ts: now,
+			session: {start}
+		};
+
 		if (this.ts) {
-			o.last = this.ts;
-			o.duration = now - this.ts;
-			o.lastEnded = fmtDate(this.ts, true);
+			o.break = {
+				start: this.ts,
+				end: now,
+				duration: now - this.ts
+			};
+
+			o.session = {
+				...o.session,
+				end: this.ts,
+				duration: this.ts - start
+			};
 		}
 
 		await appendHistory('reset', o);
